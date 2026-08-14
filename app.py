@@ -404,30 +404,20 @@ def _imagenet_gate_signal(image: Image.Image):
 
 
 def leaf_gate(image: Image.Image):
-    """Reject obvious non-leaf uploads without requiring the large CLIP gate on constrained hosts."""
+    """Reject obvious non-leaf uploads without loading extra validation models when disabled."""
     green = _green_fraction(image)
 
-    # Render Free is memory-constrained, so production can disable CLIP and use
-    # the lightweight ImageNet secondary gate instead. Local development keeps
-    # the stronger CLIP gate enabled by default.
+    # On Render Free, keep semantic validation disabled to avoid
+    # downloading/loading an additional MobileNetV2 model.
     if not ENABLE_SEMANTIC_GATE:
-        top, plant_score, nonplant_score = _imagenet_gate_signal(image)
-        if nonplant_score >= 0.35 and plant_score < 0.20 and green < 0.15:
-            return False, {
-                "reason": "non_leaf",
-                "message": "No plant leaf was detected. Please upload a clear image of a plant leaf.",
-                "green_fraction": round(green, 3),
-                "semantic_gate": "disabled",
-            }
         return True, {
             "reason": "leaf_candidate",
-            "message": "Leaf candidate accepted for disease classification.",
+            "message": "Semantic validation disabled for constrained deployment.",
             "green_fraction": round(green, 3),
             "semantic_gate": "disabled",
         }
 
-    # CLIP is the primary semantic decision. A failed model download is surfaced
-    # instead of silently pretending that a semantic check happened.
+    # CLIP is used when semantic validation is enabled.
     try:
         leaf_prob, nonleaf_prob = _semantic_leaf_score(image)
     except Exception as exc:
@@ -440,7 +430,7 @@ def leaf_gate(image: Image.Image):
             ),
         )
 
-    # Strong semantic evidence that the uploaded image is not a leaf.
+    # Strong evidence that the uploaded image is not a leaf.
     if nonleaf_prob >= 0.62 and nonleaf_prob > leaf_prob:
         return False, {
             "reason": "non_leaf",
@@ -450,7 +440,7 @@ def leaf_gate(image: Image.Image):
             "green_fraction": round(green, 3),
         }
 
-    # If both sides are close, use the existing ImageNet signal as a second opinion.
+    # If CLIP is uncertain, use the ImageNet model as a secondary signal.
     if abs(leaf_prob - nonleaf_prob) < 0.14:
         top, plant_score, nonplant_score = _imagenet_gate_signal(image)
         if nonplant_score >= 0.35 and plant_score < 0.20 and green < 0.15:
@@ -642,6 +632,7 @@ async def predict_endpoint(file: UploadFile = File(...), user=Depends(get_curren
     stored_image = stored_buffer.getvalue()
     image_mime = "image/jpeg"
     created = datetime.now().isoformat(timespec="seconds")
+    # Store every prediction under the authenticated user so records stay isolated per account.
     record = {
         "id": record_id, "filename": file.filename or safe_name, "image_path": None,
         "image_data": stored_image, "image_mime": image_mime,
