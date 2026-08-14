@@ -1,0 +1,17 @@
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+python-multipart==0.0.20
+torch>=2.2,<3
+torchvision>=0.17,<1
+Pillow>=10,<12
+numpy>=1.26,<3
+transformers>=4.45,<5
+PyJWT>=2.9,<3
+scikit-learn>=1.4,<2
+matplotlib>=3.8,<4
+
+python-dotenv>=1.0,<2
+requests>=2.32,<3
+chardet>=5.2,<6
+
+psycopg2-binary>=2.9,<3

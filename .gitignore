@@ -1,0 +1,17 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Environment / secrets
+.env
+
+# Local runtime data
+leafguard.db
+*.db
+uploads/
+
+# OS / editor
+.DS_Store
+.vscode/

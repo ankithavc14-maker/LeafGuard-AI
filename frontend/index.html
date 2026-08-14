@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LeafGuard AI</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  
+</head>
+<body>
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">🌿 <strong>LeafGuard AI</strong></div>
+    <p class="eyebrow">AI-POWERED PLANT HEALTH</p>
+    <h1>Protect your plants with AI.</h1>
+    <p class="muted">Upload a leaf image, detect supported plant diseases, and review the result with confidence and AI attention maps.</p>
+    <div class="auth-tabs"><button type="button" id="loginTab" class="auth-tab active" onclick="switchAuthTab('login')">Sign in</button><button type="button" id="registerTab" class="auth-tab" onclick="switchAuthTab('register')">Create account</button></div>
+    <form id="loginForm" class="auth-form" onsubmit="return submitLogin(event)">
+      <label>Email<input id="loginEmail" type="email" value="demo@leafguard.ai" required /></label>
+      <label>Password<input id="loginPassword" type="password" value="LeafGuard123!" required /></label>
+      <button class="primary full" type="submit">Sign in</button>
+      <button id="demoBtn" class="secondary full" type="button" onclick="useDemoAccount()">Use demo account</button>
+    </form>
+    <form id="registerForm" class="auth-form hidden" onsubmit="return submitRegister(event)">
+      <label>Name<input id="regName" required placeholder="Your name" /></label>
+      <label>Email<input id="regEmail" type="email" required placeholder="you@example.com" /></label>
+      <label>Password<input id="regPassword" type="password" minlength="8" required placeholder="At least 8 characters" /></label>
+      <button class="primary full" type="submit">Create account</button>
+    </form>
+    <div id="authError" class="error"></div>
+    <p class="demo-note">Demo login: <b>demo@leafguard.ai</b> / <b>LeafGuard123!</b></p>
+  </div>
+</div>
+
+<div id="appShell" class="app-shell hidden">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><span class="leaf">🌿</span><span>LeafGuard <b>AI</b></span></div>
+    <nav>
+      <button type="button" class="nav active" data-view="dashboard" onclick="showView('dashboard')">⌂ <span>Dashboard</span></button>
+      <button type="button" class="nav" data-view="dashboard" data-focus-upload="true" onclick="focusUpload()">⇧ <span>Predict Disease</span></button>
+      <button type="button" class="nav" data-view="history" onclick="showView('history')">◷ <span>History</span></button>
+      <button type="button" class="nav" data-view="guide" onclick="showView('guide')">🌱 <span>Plant Guide</span></button>
+      <button type="button" class="nav" data-view="statistics" onclick="showView('statistics')">▥ <span>Statistics</span></button>
+      <button type="button" class="nav" data-view="about" onclick="showView('about')">ⓘ <span>About Project</span></button>
+    </nav>
+    <div class="sidebar-tip"><strong>Healthy Plants,<br/>Better Future!</strong><div class="plant-art">🌱</div></div>
+    <div class="user-mini"><div class="avatar" id="sideAvatar">D</div><div><b id="sideName">Demo User</b><small id="sideEmail">demo@leafguard.ai</small></div><button type="button" id="logoutBtn" title="Sign out" onclick="logout()">↪</button></div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar"><button type="button" id="menuBtn" class="icon-btn" onclick="document.getElementById('sidebar')?.classList.toggle('open')">☰</button><div class="top-title">LeafGuard AI <span>Plant Disease Intelligence</span></div><div class="top-actions"><span id="modelBadge" class="mini-badge">38 classes</span><button type="button" id="logoutTop" class="logout-top" onclick="logout()">Sign out</button></div></header>
+
+    <section id="dashboard" class="view active-view">
+      <div class="hero"><div><p class="eyebrow">AI-POWERED PLANT CARE</p><h1>Welcome back, <span id="welcomeName">Demo User</span>! 👋</h1><p>Upload a clear leaf image and let LeafGuard AI analyze supported plant-health classes.</p><button type="button" class="primary" data-action="focus-upload" onclick="focusUpload()">Predict Now →</button></div><div class="hero-plant">🌿</div></div>
+      <div class="stats-row">
+        <div class="stat"><span>Total Predictions</span><strong id="totalStat">0</strong></div>
+        <div class="stat"><span>Healthy</span><strong id="healthyStat">0</strong></div>
+        <div class="stat"><span>Diseased</span><strong id="diseasedStat">0</strong></div>
+        <div class="stat"><span>Avg Confidence</span><strong id="confidenceStat">0%</strong></div>
+      </div>
+      <div class="grid-two">
+        <div class="card upload-card"><div class="card-title">Upload Leaf Image</div><div id="dropzone" class="dropzone"><div class="upload-icon">☁</div><p>Drag & drop an image here</p><span>or</span><label class="primary small">Choose File<input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" hidden onchange="if(this.files && this.files[0]) uploadFile(this.files[0])"></label><small>JPG, JPEG, PNG, WEBP · Max 5MB</small></div></div>
+        <div class="card result-card"><div class="card-title">Prediction Result</div><div id="emptyResult" class="empty">Upload an image to see the AI result.</div><div id="result" class="result hidden"></div></div>
+      </div>
+      <div class="grid-bottom"><div class="card"><div class="card-title">Recent Predictions <button type="button" class="link" data-action="show-history" onclick="showView('history')">View all</button></div><div id="recent"></div></div><div class="card tips"><div class="card-title">Quick Tips</div><p>✓ Use a clear single-leaf image</p><p>✓ Use natural or even lighting</p><p>✓ Avoid blurry images</p><p>✓ Supported crops are shown in Plant Guide</p></div></div>
+    </section>
+
+    <section id="history" class="view"><div class="page-title"><p class="eyebrow">YOUR ACTIVITY</p><h1>Prediction History</h1><p>Saved predictions for your account.</p></div><div class="card"><div id="historyTable"></div></div></section>
+
+    <section id="guide" class="view"><div class="page-title"><p class="eyebrow">LEAFGUARD KNOWLEDGE</p><h1>Plant Guide</h1><p id="guideSummary">Loading supported plants...</p></div><div id="guideGrid" class="guide-grid"></div><div class="disclaimer">⚠️ LeafGuard AI is decision-support software. Confirm uncertain diagnoses and treatment choices with qualified local agricultural guidance.</div></section>
+
+    <section id="statistics" class="view"><div class="page-title"><p class="eyebrow">INSIGHTS</p><h1>Your Prediction Statistics</h1><p>Simple analytics from your saved LeafGuard predictions.</p></div><div class="stats-large"><div class="card stat-big"><span>Total predictions</span><strong id="statTotal">0</strong></div><div class="card stat-big"><span>Healthy results</span><strong id="statHealthy">0</strong></div><div class="card stat-big"><span>Disease / review</span><strong id="statDiseased">0</strong></div><div class="card stat-big"><span>Needs review</span><strong id="statReview">0</strong></div></div><div class="card chart-card"><div class="card-title">Confidence overview</div><div class="confidence-visual"><div class="confidence-ring"><span id="ringValue">0%</span></div><div><h3>Average confidence</h3><p id="confidenceText" class="muted">No predictions yet.</p><p class="muted">A confidence score is not a guarantee of correctness. Low-margin predictions are flagged for review.</p></div></div></div></section>
+
+    <section id="about" class="view"><div class="page-title"><p class="eyebrow">ABOUT</p><h1>How LeafGuard AI Works</h1><p>An end-to-end AI web application built around a 38-class plant-health image classifier.</p></div><div class="about-grid"><div class="card"><span class="step">01</span><h3>Validate</h3><p>Checks file type, size, dimensions, brightness, blur and a lightweight plant/non-plant gate before classification.</p></div><div class="card"><span class="step">02</span><h3>Predict</h3><p>The fine-tuned MobileNetV2 image classifier predicts among 38 supported plant-health classes across 14 crop species.</p></div><div class="card"><span class="step">03</span><h3>Explain</h3><p>For confident predictions, Grad-CAM highlights the image region that most influenced the CNN prediction.</p></div><div class="card"><span class="step">04</span><h3>Guide</h3><p>Shows symptoms, prevention and general treatment guidance with an uncertainty warning when needed.</p></div><div class="card"><span class="step">05</span><h3>Remember</h3><p>Prediction history, statistics and uploaded images are stored per user in PostgreSQL.</p></div><div class="card"><span class="step">06</span><h3>Secure access</h3><p>Users can register and sign in with JWT sessions. Passwords are stored as salted PBKDF2 hashes.</p></div></div><div class="disclaimer">⚠️ Production deployments should use a strong secret key, HTTPS, a production database, rate limiting and a proper agricultural validation process.</div></section>
+  </main>
+</div>
+<script src="/static/app.js?v=80" defer></script>
+</body>
+</html>
