@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Local runtime data
+leafguard.db
+*.db
+uploads/
+
+# Model artifacts / local checkpoints
+*.pth
+*.pt
+*.onnx
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Test / cache output
+.pytest_cache/
+.mypy_cache/
